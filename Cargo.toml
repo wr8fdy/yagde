@@ -1,0 +1,20 @@
+[package]
+edition = "2021"
+include = ["**/*.rs", "Cargo.toml", "Cargo.lock"]
+name = "yagde"
+version = "0.1.0"
+
+[profile.release]
+lto = true
+opt-level = "z"
+strip = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0"
+clap = {version = "4.0.11", features = ["derive"]}
+inquire = "0.4"
+strum = "0.24"
+strum_macros = "0.24"
+thiserror = "1.0.37"
