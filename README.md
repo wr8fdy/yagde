@@ -1,8 +1,8 @@
-# Yet Another Grim Down File Editor for Linux (yagde)
+# Yet Another Grim Dawn File Editor for Linux (yagde)
 
 _The main purpose of this project was to learn a bit about Rust._
 
-It's a minimalistic CLI tool for editing Grim Down save files. With `yagde`, you can use:
+It's a minimalistic CLI tool for editing Grim Dawn save files. With `yagde`, you can use:
 
 - [`View`] view some main info: level, attributes, skills, devotions, etc;
 - [`Rename`] change character name;
