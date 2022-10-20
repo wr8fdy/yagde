@@ -1,6 +1,6 @@
 use crate::gd::gd_file::{Block, FileError, GDReader, GDWriter, ReadWrite};
-
 use anyhow::{bail, Ok, Result};
+use std::ops::{Deref, DerefMut};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct TeleportList {
@@ -156,16 +156,30 @@ impl ShrineList {
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct CharUID([u8; 16]);
 
+impl Deref for CharUID {
+    type Target = [u8; 16];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for CharUID {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 impl ReadWrite for CharUID {
     fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         for i in 0..16 {
-            self.0[i] = f.read_byte()?
+            self[i] = f.read_byte()?;
         }
         Ok(())
     }
 
     fn write(&self, f: &mut impl GDWriter) -> Result<()> {
-        for i in self.0.iter() {
+        for i in self.iter() {
             f.write_byte(*i)?;
         }
         Ok(())
