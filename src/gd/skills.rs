@@ -1,6 +1,7 @@
 use crate::gd::gd_file::{Block, FileError, GDReader, GDWriter, ReadWrite};
 
 use anyhow::{bail, Ok, Result};
+use smart_default::SmartDefault;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 struct ItemSkill {
@@ -75,7 +76,7 @@ impl ReadWrite for Skill {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq, Eq)]
 pub struct SkillList {
     pub skill_reclamation_points_used: u32,
     pub devotion_reclamation_points_used: u32,
@@ -83,12 +84,14 @@ pub struct SkillList {
     version: u32,
     item_skills: Vec<ItemSkill>,
     masteries_allowed: u32,
+    #[default = 8]
+    block_seq: u32,
 }
 
 impl SkillList {
     pub fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 8)?;
+        f.write_block_start(&mut b, self.block_seq)?;
 
         f.write_int(self.version)?;
         f.write_vec(&self.skills)?;
@@ -102,7 +105,7 @@ impl SkillList {
 
     pub fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
-        f.read_block_start(&mut b, 8)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.version = f.read_int()?;
         if self.version != 5 {

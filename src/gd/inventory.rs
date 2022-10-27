@@ -2,6 +2,7 @@ use crate::gd::gd_file::{Block, FileError, GDReader, GDWriter, ReadWrite};
 use crate::gd::item::Item;
 
 use anyhow::{bail, Ok, Result};
+use smart_default::SmartDefault;
 
 #[derive(Default, Debug, Clone, PartialEq)]
 struct StashItem {
@@ -25,19 +26,21 @@ impl ReadWrite for StashItem {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq)]
 struct StashPage {
     width: u32,
     height: u32,
     version: u32,
     items: Vec<StashItem>,
+    #[default = 0]
+    block_seq: u32,
 }
 
 impl StashPage {
     fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
         if self.version >= 6 {
-            f.write_block_start(&mut b, 0)?;
+            f.write_block_start(&mut b, self.block_seq)?;
         }
 
         f.write_int(self.width)?;
@@ -56,7 +59,7 @@ impl StashPage {
 
         let mut b = Block::default();
         if self.version >= 6 {
-            f.read_block_start(&mut b, 0)?;
+            f.read_block_start(&mut b, self.block_seq)?;
         }
 
         self.width = f.read_int()?;
@@ -71,17 +74,19 @@ impl StashPage {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq)]
 pub struct Stash {
     pages: Vec<StashPage>,
     version: u32,
     num_pages: usize,
+    #[default = 4]
+    block_seq: u32,
 }
 
 impl Stash {
     pub fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 4)?;
+        f.write_block_start(&mut b, self.block_seq)?;
 
         f.write_int(self.version)?;
 
@@ -98,7 +103,7 @@ impl Stash {
 
     pub fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
-        f.read_block_start(&mut b, 4)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.version = f.read_int()?;
         if !(5..=6).contains(&self.version) {
@@ -146,16 +151,18 @@ impl ReadWrite for InventoryItem {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq, Eq)]
 struct InventorySack {
     items: Vec<InventoryItem>,
     temp_bool: u8,
+    #[default = 0]
+    block_seq: u32,
 }
 
 impl ReadWrite for InventorySack {
     fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
-        f.read_block_start(&mut b, 0)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.temp_bool = f.read_byte()?;
         self.items = f.read_vec()?;
@@ -165,7 +172,7 @@ impl ReadWrite for InventorySack {
 
     fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 0)?;
+        f.write_block_start(&mut b, self.block_seq)?;
 
         f.write_byte(self.temp_bool)?;
         f.write_vec(&self.items)?;
@@ -192,7 +199,7 @@ impl InventoryEquipment {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq, Eq)]
 pub struct Inventory {
     version: u32,
     flag: u8,
@@ -205,12 +212,14 @@ pub struct Inventory {
     equipment: [InventoryEquipment; 12],
     weapon1: [InventoryEquipment; 2],
     weapon2: [InventoryEquipment; 2],
+    #[default = 3]
+    block_seq: u32,
 }
 
 impl Inventory {
     pub fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 3)?;
+        f.write_block_start(&mut b, self.block_seq)?;
         f.write_int(self.version)?;
         f.write_byte(self.flag)?;
 
@@ -240,7 +249,7 @@ impl Inventory {
 
     pub fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
-        f.read_block_start(&mut b, 3)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.version = f.read_int()?;
         if !(4..=5).contains(&self.version) {

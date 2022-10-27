@@ -1,5 +1,6 @@
 use crate::gd::gd_file::{Block, FileError, GDReader, GDWriter};
 use anyhow::{bail, Result};
+use smart_default::SmartDefault;
 use strum_macros::Display;
 
 #[derive(Default, Debug, Display, Clone, PartialEq, Eq)]
@@ -58,7 +59,7 @@ impl From<CrucibleDifficulty> for u8 {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq, Eq)]
 pub struct Info {
     pub greatest_difficulty: Difficulty,
     pub greatest_crucible_difficulty: CrucibleDifficulty,
@@ -75,12 +76,14 @@ pub struct Info {
     skill_window_show_help: u8,
     texture: String,
     version: u32,
+    #[default = 1]
+    block_seq: u32,
 }
 
 impl Info {
     pub fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 1)?;
+        f.write_block_start(&mut b, self.block_seq)?;
 
         f.write_int(self.version)?;
 
@@ -119,7 +122,7 @@ impl Info {
 
     pub fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
-        f.read_block_start(&mut b, 1)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.version = f.read_int()?;
         if !(3..=5).contains(&self.version) {
@@ -160,7 +163,7 @@ impl Info {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq)]
 pub struct Bio {
     pub experience: u32,
     pub skill_points: u32,
@@ -174,12 +177,14 @@ pub struct Bio {
     pub total_devotion: u32,
     level: u32,
     version: u32,
+    #[default = 2]
+    block_seq: u32,
 }
 
 impl Bio {
     pub fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 2)?;
+        f.write_block_start(&mut b, self.block_seq)?;
 
         f.write_int(8)?;
         f.write_int(self.level)?;
@@ -200,7 +205,7 @@ impl Bio {
     pub fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
 
-        f.read_block_start(&mut b, 2)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.version = f.read_int()?;
         if self.version != 8 {

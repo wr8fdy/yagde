@@ -1,17 +1,21 @@
 use crate::gd::gd_file::{Block, FileError, GDReader, GDWriter, ReadWrite};
+
 use anyhow::{bail, Ok, Result};
+use smart_default::SmartDefault;
 use std::ops::{Deref, DerefMut};
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq, Eq)]
 pub struct TeleportList {
     version: u32,
     uids: [Vec<CharUID>; 3],
+    #[default = 6]
+    block_seq: u32,
 }
 
 impl TeleportList {
     pub fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 6)?;
+        f.write_block_start(&mut b, self.block_seq)?;
         f.write_int(self.version)?;
 
         for i in self.uids.iter() {
@@ -23,7 +27,7 @@ impl TeleportList {
 
     pub fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
-        f.read_block_start(&mut b, 6)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.version = f.read_int()?;
         if self.version != 1 {
@@ -38,17 +42,19 @@ impl TeleportList {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq, Eq)]
 pub struct RespawnList {
     version: u32,
     uids: [Vec<CharUID>; 3],
     spawns: [CharUID; 3],
+    #[default = 5]
+    block_seq: u32,
 }
 
 impl RespawnList {
     pub fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 5)?;
+        f.write_block_start(&mut b, self.block_seq)?;
         f.write_int(self.version)?;
 
         for i in self.uids.iter() {
@@ -64,7 +70,7 @@ impl RespawnList {
 
     pub fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
-        f.read_block_start(&mut b, 5)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.version = f.read_int()?;
         if self.version != 1 {
@@ -83,16 +89,18 @@ impl RespawnList {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq, Eq)]
 pub struct MarkerList {
     version: u32,
     uids: [Vec<CharUID>; 3],
+    #[default = 7]
+    block_seq: u32,
 }
 
 impl MarkerList {
     pub fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 7)?;
+        f.write_block_start(&mut b, self.block_seq)?;
         f.write_int(self.version)?;
 
         for i in self.uids.iter() {
@@ -104,7 +112,7 @@ impl MarkerList {
 
     pub fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
-        f.read_block_start(&mut b, 7)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.version = f.read_int()?;
         if self.version != 1 {
@@ -117,16 +125,18 @@ impl MarkerList {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq, Eq)]
 pub struct ShrineList {
     version: u32,
     uids: [Vec<CharUID>; 6],
+    #[default = 17]
+    block_seq: u32,
 }
 
 impl ShrineList {
     pub fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 17)?;
+        f.write_block_start(&mut b, self.block_seq)?;
         f.write_int(self.version)?;
 
         for i in self.uids.iter() {
@@ -138,7 +148,7 @@ impl ShrineList {
 
     pub fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
-        f.read_block_start(&mut b, 17)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.version = f.read_int()?;
         if self.version != 2 {

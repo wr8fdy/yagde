@@ -1,17 +1,20 @@
 use crate::gd::gd_file::{Block, FileError, GDReader, GDWriter, ReadWrite};
 
 use anyhow::{bail, Ok, Result};
+use smart_default::SmartDefault;
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq, Eq)]
 pub struct Crucible {
     version: u32,
     pub tokens_per_difficulty: [Vec<String>; 3],
+    #[default = 10]
+    block_seq: u32,
 }
 
 impl Crucible {
     pub fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 10)?;
+        f.write_block_start(&mut b, self.block_seq)?;
         f.write_int(self.version)?;
 
         for t in self.tokens_per_difficulty.iter() {
@@ -27,7 +30,7 @@ impl Crucible {
 
     pub fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
-        f.read_block_start(&mut b, 10)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.version = f.read_int()?;
         if self.version != 2 {
@@ -50,16 +53,18 @@ impl Crucible {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq, Eq)]
 pub struct TutorialPages {
     version: u32,
     pages: Vec<u32>,
+    #[default = 15]
+    block_seq: u32,
 }
 
 impl TutorialPages {
     pub fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 15)?;
+        f.write_block_start(&mut b, self.block_seq)?;
         f.write_int(self.version)?;
 
         f.write_int(self.pages.len() as u32)?;
@@ -72,7 +77,7 @@ impl TutorialPages {
 
     pub fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
-        f.read_block_start(&mut b, 15)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.version = f.read_int()?;
         if self.version != 1 {
@@ -140,7 +145,7 @@ impl UISlot {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq)]
 pub struct UI {
     version: u32,
     slots: Vec<UISlot>,
@@ -151,12 +156,14 @@ pub struct UI {
     unknown5: [String; 5],
     unknown6: [u8; 5],
     camera_distance: f32,
+    #[default = 14]
+    block_seq: u32,
 }
 
 impl UI {
     pub fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 14)?;
+        f.write_block_start(&mut b, self.block_seq)?;
         f.write_int(self.version)?;
 
         f.write_byte(self.unknown1)?;
@@ -179,7 +186,7 @@ impl UI {
 
     pub fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
-        f.read_block_start(&mut b, 14)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.version = f.read_int()?;
         if self.version != 4 && self.version != 5 {
@@ -217,17 +224,19 @@ impl UI {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq)]
 pub struct FactionList {
     version: u32,
     faction: u32,
     factions: Vec<Faction>,
+    #[default = 13]
+    block_seq: u32,
 }
 
 impl FactionList {
     pub fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 13)?;
+        f.write_block_start(&mut b, self.block_seq)?;
 
         f.write_int(self.version)?;
         f.write_int(self.faction)?;
@@ -238,7 +247,7 @@ impl FactionList {
 
     pub fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
-        f.read_block_start(&mut b, 13)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.version = f.read_int()?;
         if self.version != 5 {
@@ -281,16 +290,18 @@ impl ReadWrite for Faction {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq, Eq)]
 pub struct NoteList {
     version: u32,
     notes: Vec<String>,
+    #[default = 12]
+    block_seq: u32,
 }
 
 impl NoteList {
     pub fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 12)?;
+        f.write_block_start(&mut b, self.block_seq)?;
         f.write_int(self.version)?;
 
         f.write_int(self.notes.len() as u32)?;
@@ -303,7 +314,7 @@ impl NoteList {
 
     pub fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
-        f.read_block_start(&mut b, 12)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.version = f.read_int()?;
         if self.version != 1 {

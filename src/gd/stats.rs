@@ -1,6 +1,7 @@
 use crate::gd::gd_file::{Block, FileError, GDReader, GDWriter, ReadWrite};
 
 use anyhow::{bail, Ok, Result};
+use smart_default::SmartDefault;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 struct SkillMap {
@@ -32,7 +33,7 @@ struct StatsPerDifficulty {
     nemesis_kills: u32,
 }
 
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq)]
 pub struct Stats {
     pub champion_kills: u32,
     pub deaths: u32,
@@ -71,12 +72,14 @@ pub struct Stats {
     transcendent_relics_crafted: u32,
     unknown1: u32,
     unknown2: u32,
+    #[default = 16]
+    block_seq: u32,
 }
 
 impl Stats {
     pub fn write(&self, f: &mut impl GDWriter) -> Result<()> {
         let mut b = Block::default();
-        f.write_block_start(&mut b, 16)?;
+        f.write_block_start(&mut b, self.block_seq)?;
         f.write_int(self.version)?;
 
         f.write_int(self.playtime)?;
@@ -139,7 +142,7 @@ impl Stats {
 
     pub fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
         let mut b = Block::default();
-        f.read_block_start(&mut b, 16)?;
+        f.read_block_start(&mut b, self.block_seq)?;
 
         self.version = f.read_int()?;
         if self.version != 7 && self.version != 9 && self.version != 11 {
