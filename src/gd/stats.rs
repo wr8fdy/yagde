@@ -1,6 +1,6 @@
-use crate::gd::gd_file::{Block, FileError, GDReader, GDWriter, ReadWrite};
+use crate::gd::gd_file::{Block, GDReader, GDWriter, ReadWrite};
 
-use anyhow::{bail, Ok, Result};
+use anyhow::{Ok, Result};
 use smart_default::SmartDefault;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -74,6 +74,8 @@ pub struct Stats {
     unknown2: u32,
     #[default = 16]
     block_seq: u32,
+    #[default(_code = "vec![7, 9, 11]")]
+    supported_versions: Vec<u32>,
 }
 
 impl Stats {
@@ -144,14 +146,7 @@ impl Stats {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_int()?;
-        if self.version != 7 && self.version != 9 && self.version != 11 {
-            bail!(FileError::UnsupportedVersion(
-                self.version,
-                "7,9,11".to_string()
-            ));
-        }
-
+        self.version = f.read_version(&self.supported_versions)?;
         self.playtime = f.read_int()?;
         self.deaths = f.read_int()?;
         self.kills = f.read_int()?;

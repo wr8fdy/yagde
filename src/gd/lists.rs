@@ -1,6 +1,6 @@
-use crate::gd::gd_file::{Block, FileError, GDReader, GDWriter, ReadWrite};
+use crate::gd::gd_file::{Block, GDReader, GDWriter, ReadWrite};
 
-use anyhow::{bail, Ok, Result};
+use anyhow::{Ok, Result};
 use smart_default::SmartDefault;
 use std::ops::{Deref, DerefMut};
 
@@ -10,6 +10,8 @@ pub struct TeleportList {
     uids: [Vec<CharUID>; 3],
     #[default = 6]
     block_seq: u32,
+    #[default(_code = "vec![1]")]
+    supported_versions: Vec<u32>,
 }
 
 impl TeleportList {
@@ -29,10 +31,7 @@ impl TeleportList {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_int()?;
-        if self.version != 1 {
-            bail!(FileError::UnsupportedVersion(self.version, "1".to_string()));
-        }
+        self.version = f.read_version(&self.supported_versions)?;
 
         for i in self.uids.iter_mut() {
             i.extend(f.read_vec()?);
@@ -49,6 +48,8 @@ pub struct RespawnList {
     spawns: [CharUID; 3],
     #[default = 5]
     block_seq: u32,
+    #[default(_code = "vec![1]")]
+    supported_versions: Vec<u32>,
 }
 
 impl RespawnList {
@@ -72,10 +73,7 @@ impl RespawnList {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_int()?;
-        if self.version != 1 {
-            bail!(FileError::UnsupportedVersion(self.version, "1".to_string()));
-        }
+        self.version = f.read_version(&self.supported_versions)?;
 
         for i in self.uids.iter_mut() {
             i.extend(f.read_vec()?);
@@ -95,6 +93,8 @@ pub struct MarkerList {
     uids: [Vec<CharUID>; 3],
     #[default = 7]
     block_seq: u32,
+    #[default(_code = "vec![1]")]
+    supported_versions: Vec<u32>,
 }
 
 impl MarkerList {
@@ -114,10 +114,8 @@ impl MarkerList {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_int()?;
-        if self.version != 1 {
-            bail!(FileError::UnsupportedVersion(self.version, "1".to_string()));
-        }
+        self.version = f.read_version(&self.supported_versions)?;
+
         for i in self.uids.iter_mut() {
             i.extend(f.read_vec()?);
         }
@@ -131,6 +129,8 @@ pub struct ShrineList {
     uids: [Vec<CharUID>; 6],
     #[default = 17]
     block_seq: u32,
+    #[default(_code = "vec![2]")]
+    supported_versions: Vec<u32>,
 }
 
 impl ShrineList {
@@ -150,10 +150,7 @@ impl ShrineList {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_int()?;
-        if self.version != 2 {
-            bail!(FileError::UnsupportedVersion(self.version, "2".to_string()));
-        }
+        self.version = f.read_version(&self.supported_versions)?;
 
         for i in self.uids.iter_mut() {
             i.extend(f.read_vec()?);

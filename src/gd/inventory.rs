@@ -1,7 +1,7 @@
-use crate::gd::gd_file::{Block, FileError, GDReader, GDWriter, ReadWrite};
+use crate::gd::gd_file::{Block, GDReader, GDWriter, ReadWrite};
 use crate::gd::item::Item;
 
-use anyhow::{bail, Ok, Result};
+use anyhow::{Ok, Result};
 use smart_default::SmartDefault;
 
 #[derive(Default, Debug, Clone, PartialEq)]
@@ -81,6 +81,8 @@ pub struct Stash {
     num_pages: usize,
     #[default = 4]
     block_seq: u32,
+    #[default(_code = "vec![5, 6]")]
+    supported_versions: Vec<u32>,
 }
 
 impl Stash {
@@ -105,14 +107,7 @@ impl Stash {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_int()?;
-        if !(5..=6).contains(&self.version) {
-            bail!(FileError::UnsupportedVersion(
-                self.version,
-                "5..=6".to_string()
-            ));
-        }
-
+        self.version = f.read_version(&self.supported_versions)?;
         self.num_pages = 1;
         if self.version >= 6 {
             self.num_pages = f.read_int()? as usize;
@@ -214,6 +209,8 @@ pub struct Inventory {
     weapon2: [InventoryEquipment; 2],
     #[default = 3]
     block_seq: u32,
+    #[default(_code = "vec![4, 5]")]
+    supported_versions: Vec<u32>,
 }
 
 impl Inventory {
@@ -251,14 +248,7 @@ impl Inventory {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_int()?;
-        if !(4..=5).contains(&self.version) {
-            bail!(FileError::UnsupportedVersion(
-                self.version,
-                "4..=5".to_string()
-            ));
-        }
-
+        self.version = f.read_version(&self.supported_versions)?;
         self.flag = f.read_byte()?;
 
         if self.flag != 0 {

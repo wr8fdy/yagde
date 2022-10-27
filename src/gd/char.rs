@@ -1,4 +1,4 @@
-use crate::gd::gd_file::{FileError, GDFile, GDReader, GDWriter, ReadWrite};
+use crate::gd::gd_file::{GDFile, GDReader, GDWriter, ReadWrite};
 use crate::gd::info::{Bio, Info};
 use crate::gd::inventory::*;
 use crate::gd::lists::*;
@@ -10,6 +10,7 @@ use std::fs::File;
 use std::path::PathBuf;
 
 use anyhow::{bail, Error, Ok, Result};
+use smart_default::SmartDefault;
 use strum_macros::Display;
 use thiserror::Error;
 
@@ -21,7 +22,7 @@ enum ParseError {
     ParseExpansionStatusError(u8),
 }
 
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq)]
 pub struct Char {
     pub header: Header,
     pub stats: Stats,
@@ -41,6 +42,8 @@ pub struct Char {
     pub ui: UI,
     pub tutorials: TutorialPages,
     pub crucible: Crucible,
+    #[default(_code = "vec![6, 7, 8]")]
+    supported_versions: Vec<u32>,
 }
 
 impl Char {
@@ -220,14 +223,7 @@ impl Char {
             bail!("next_int() != 0");
         }
 
-        self.version = f.read_int()?;
-        if !(6..=8).contains(&self.version) {
-            bail!(FileError::UnsupportedVersion(
-                self.version,
-                "6..=8".to_string()
-            ));
-        }
-
+        self.version = f.read_version(&self.supported_versions)?;
         self.uid.read(&mut f)?;
         self.info.read(&mut f)?;
         self.bio.read(&mut f)?;
@@ -293,7 +289,7 @@ impl TryFrom<u8> for ExpansionStatus {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(SmartDefault, Debug, Clone, PartialEq, Eq)]
 pub struct Header {
     pub name: String,
     pub sex: Sex,
@@ -302,6 +298,8 @@ pub struct Header {
     pub expansion_status: ExpansionStatus,
     version: u32,
     class_id: String,
+    #[default(_code = "vec![1, 2]")]
+    supported_versions: Vec<u32>,
 }
 
 impl Header {
@@ -320,14 +318,7 @@ impl Header {
     }
 
     fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
-        self.version = f.read_int()?;
-        if self.version != 1 && self.version != 2 {
-            bail!(FileError::UnsupportedVersion(
-                self.version,
-                "1..=2".to_string()
-            ));
-        }
-
+        self.version = f.read_version(&self.supported_versions)?;
         self.name = f.read_wstring()?;
         self.sex = f.read_byte()?.try_into()?;
         self.class_id = f.read_string()?;

@@ -1,6 +1,7 @@
 use anyhow::{bail, Ok, Result};
 use std::fs::File;
 use std::io::{prelude::*, SeekFrom};
+use std::vec;
 use thiserror::Error;
 
 pub trait ReadWrite {
@@ -17,6 +18,7 @@ pub trait GDReader {
     fn read_byte(&mut self) -> Result<u8>;
     fn read_key(&mut self) -> Result<()>;
     fn read_float(&mut self) -> Result<f32>;
+    fn read_version(&mut self, supported_versions: &[u32]) -> Result<u32>;
     fn read_int(&mut self) -> Result<u32>;
     fn next_int(&mut self) -> Result<u32>;
     fn read_block_start(&mut self, b: &mut Block, n: u32) -> Result<()>;
@@ -36,9 +38,9 @@ pub trait GDWriter {
 }
 
 #[derive(Error, Debug)]
-pub enum FileError {
-    #[error("Unsupported version: {0}, expected {1}")]
-    UnsupportedVersion(u32, String),
+enum FileError {
+    #[error("Unsupported version: {0}, expected {1:?}")]
+    UnsupportedVersion(u32, Vec<u32>),
     #[error("Incorrect block end position: {0}, expected {1}")]
     IncorrectBlockEndPosition(u64, u64),
     #[error("Failed to validate block ending: {0}, expected {1}")]
@@ -59,6 +61,7 @@ pub struct GDFile {
     f: File,
     key: u32,
     table: [u32; 256],
+    supported_versions: Vec<u32>,
 }
 
 impl GDFile {
@@ -67,6 +70,7 @@ impl GDFile {
             f,
             key: 0,
             table: [0; 256],
+            supported_versions: vec![0x58434447],
         }
     }
 
@@ -101,8 +105,11 @@ impl GDReader for GDFile {
         self.read_key()?;
 
         let ret = self.read_int()?;
-        if ret != 0x58434447 {
-            bail!(FileError::UnsupportedVersion(ret, "0x58434447".to_string()));
+        if !self.supported_versions.contains(&ret) {
+            bail!(FileError::UnsupportedVersion(
+                ret,
+                self.supported_versions.to_vec()
+            ));
         };
         Ok(())
     }
@@ -161,6 +168,23 @@ impl GDReader for GDFile {
 
     fn read_float(&mut self) -> Result<f32> {
         Ok(f32::from_bits(self.read_int()?))
+    }
+
+    fn read_version(&mut self, supported_versions: &[u32]) -> Result<u32> {
+        let mut buf: [u8; 4] = [0; 4];
+        self.f.read_exact(&mut buf)?;
+        let val = u32::from_ne_bytes(buf);
+        let ret = val ^ self.key;
+        self.update_key(buf.to_vec());
+
+        if !supported_versions.contains(&ret) {
+            bail!(FileError::UnsupportedVersion(
+                ret,
+                supported_versions.to_vec()
+            ));
+        }
+
+        Ok(ret)
     }
 
     fn read_int(&mut self) -> Result<u32> {

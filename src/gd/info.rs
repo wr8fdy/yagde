@@ -1,5 +1,5 @@
-use crate::gd::gd_file::{Block, FileError, GDReader, GDWriter};
-use anyhow::{bail, Result};
+use crate::gd::gd_file::{Block, GDReader, GDWriter};
+use anyhow::Result;
 use smart_default::SmartDefault;
 use strum_macros::Display;
 
@@ -78,6 +78,8 @@ pub struct Info {
     version: u32,
     #[default = 1]
     block_seq: u32,
+    #[default(_code = "vec![3, 4, 5]")]
+    supported_versions: Vec<u32>,
 }
 
 impl Info {
@@ -124,14 +126,7 @@ impl Info {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_int()?;
-        if !(3..=5).contains(&self.version) {
-            bail!(FileError::UnsupportedVersion(
-                self.version,
-                "3..=5".to_string()
-            ));
-        }
-
+        self.version = f.read_version(&self.supported_versions)?;
         self.is_in_main_quest = f.read_byte()?;
         self.has_been_in_game = f.read_byte()?;
         self.difficulty = f.read_byte()?.into();
@@ -179,6 +174,8 @@ pub struct Bio {
     version: u32,
     #[default = 2]
     block_seq: u32,
+    #[default(_code = "vec![8]")]
+    supported_versions: Vec<u32>,
 }
 
 impl Bio {
@@ -207,11 +204,7 @@ impl Bio {
 
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_int()?;
-        if self.version != 8 {
-            bail!(FileError::UnsupportedVersion(self.version, "8".to_string()));
-        }
-
+        self.version = f.read_version(&self.supported_versions)?;
         self.level = f.read_int()?;
         self.experience = f.read_int()?;
         self.attribute_points = f.read_int()?;

@@ -1,6 +1,6 @@
-use crate::gd::gd_file::{Block, FileError, GDReader, GDWriter, ReadWrite};
+use crate::gd::gd_file::{Block, GDReader, GDWriter, ReadWrite};
 
-use anyhow::{bail, Ok, Result};
+use anyhow::{Ok, Result};
 use smart_default::SmartDefault;
 
 #[derive(SmartDefault, Debug, Clone, PartialEq, Eq)]
@@ -9,6 +9,8 @@ pub struct Crucible {
     pub tokens_per_difficulty: [Vec<String>; 3],
     #[default = 10]
     block_seq: u32,
+    #[default(_code = "vec![2]")]
+    supported_versions: Vec<u32>,
 }
 
 impl Crucible {
@@ -32,10 +34,7 @@ impl Crucible {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_int()?;
-        if self.version != 2 {
-            bail!(FileError::UnsupportedVersion(self.version, "2".to_string()));
-        }
+        self.version = f.read_version(&self.supported_versions)?;
 
         for i in 0..self.tokens_per_difficulty.len() {
             for _ in 0..f.read_int()? {
@@ -59,6 +58,8 @@ pub struct TutorialPages {
     pages: Vec<u32>,
     #[default = 15]
     block_seq: u32,
+    #[default(_code = "vec![1]")]
+    supported_versions: Vec<u32>,
 }
 
 impl TutorialPages {
@@ -79,11 +80,7 @@ impl TutorialPages {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_int()?;
-        if self.version != 1 {
-            bail!(FileError::UnsupportedVersion(self.version, "1".to_string()));
-        }
-
+        self.version = f.read_version(&self.supported_versions)?;
         let n = f.read_int()? as usize;
         self.pages = Vec::with_capacity(n);
         for _ in 0..n {
@@ -158,6 +155,8 @@ pub struct UI {
     camera_distance: f32,
     #[default = 14]
     block_seq: u32,
+    #[default(_code = "vec![4, 5]")]
+    supported_versions: Vec<u32>,
 }
 
 impl UI {
@@ -188,14 +187,7 @@ impl UI {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_int()?;
-        if self.version != 4 && self.version != 5 {
-            bail!(FileError::UnsupportedVersion(
-                self.version,
-                "4..=5".to_string()
-            ));
-        }
-
+        self.version = f.read_version(&self.supported_versions)?;
         self.unknown1 = f.read_byte()?;
         self.unknown2 = f.read_int()?;
         self.unknown3 = f.read_byte()?;
@@ -231,6 +223,8 @@ pub struct FactionList {
     factions: Vec<Faction>,
     #[default = 13]
     block_seq: u32,
+    #[default(_code = "vec![5]")]
+    supported_versions: Vec<u32>,
 }
 
 impl FactionList {
@@ -249,11 +243,7 @@ impl FactionList {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_int()?;
-        if self.version != 5 {
-            bail!(FileError::UnsupportedVersion(self.version, "5".to_string()));
-        }
-
+        self.version = f.read_version(&self.supported_versions)?;
         self.faction = f.read_int()?;
         self.factions = f.read_vec()?;
 
@@ -296,6 +286,8 @@ pub struct NoteList {
     notes: Vec<String>,
     #[default = 12]
     block_seq: u32,
+    #[default(_code = "vec![1]")]
+    supported_versions: Vec<u32>,
 }
 
 impl NoteList {
@@ -316,11 +308,7 @@ impl NoteList {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_int()?;
-        if self.version != 1 {
-            bail!(FileError::UnsupportedVersion(self.version, "1".to_string()));
-        }
-
+        self.version = f.read_version(&self.supported_versions)?;
         let n = f.read_int()?;
         for _ in 0..n {
             let note = f.read_string()?;
