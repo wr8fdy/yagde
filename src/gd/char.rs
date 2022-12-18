@@ -249,7 +249,7 @@ impl Char {
     }
 }
 
-#[derive(Default, Debug, Display, PartialEq, Eq, Clone)]
+#[derive(Default, Debug, Display, PartialEq, Eq, Clone, Copy)]
 pub enum Sex {
     #[default]
     Female,
@@ -267,7 +267,7 @@ impl TryFrom<u8> for Sex {
     }
 }
 
-#[derive(Default, Debug, Display, PartialEq, Eq, Clone)]
+#[derive(Default, Debug, Display, PartialEq, Eq, Clone, Copy)]
 pub enum ExpansionStatus {
     #[default]
     Vanilla,

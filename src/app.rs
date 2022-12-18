@@ -4,21 +4,19 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
 
-use anyhow::Result;
+use anyhow::{bail, Ok, Result};
 use clap::Parser;
 use inquire::{Select, Text};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
 
-const DEFAULT_PATH: &str = "$HOME/.local/share/Steam/steamapps/compatdata/219990/pfx/drive_c/users/steamuser/Documents/My Games/Grim Dawn/save/main";
-
 #[derive(Parser, Debug)]
-#[command(name = "gdr")]
+#[command(name = "yagde")]
 #[command(author = "wr8fdy")]
 #[command(about = "Grim Dawn save file editor", version = None, long_about = None)]
 struct Cli {
-    #[arg(short = 's', long, default_value_t = DEFAULT_PATH.to_string())]
-    save_path: String,
+    #[arg(short = 's', long)]
+    save_path: Option<String>,
 }
 
 #[derive(Display, EnumIter, PartialEq, Eq)]
@@ -49,7 +47,12 @@ enum ResetOpt {
 pub fn run() -> Result<()> {
     let cli = Cli::parse();
 
-    let path = Path::new(&cli.save_path.replace("$HOME", &env::var("HOME")?)).to_path_buf();
+    let path: PathBuf;
+    if let Some(p) = &cli.save_path {
+        path = Path::new(&p.replace("$HOME", &env::var("HOME")?)).to_path_buf();
+    } else {
+        path = try_locate_files()?;
+    }
 
     let chars = get_chars_names(path)?;
     let mut options: Vec<&String> = chars.keys().collect();
@@ -126,4 +129,28 @@ fn get_chars_names(p: PathBuf) -> Result<HashMap<String, PathBuf>> {
     }
 
     Ok(chars)
+}
+
+fn try_locate_files() -> Result<PathBuf> {
+    const STEAM_LOCAL_PATH: &str = r"steamapps/compatdata/219990/pfx/drive_c/users/steamuser/Documents/My Games/Grim Dawn/save/main";
+
+    let home_dir = &env::var("HOME")?;
+    let steam_paths = vec![
+        ".local/share/Steam",
+        ".steam/debian-installation",
+        ".var/app/com.valvesoftware.Steam/data/Steam",
+    ];
+    let mut path = PathBuf::new();
+
+    for p in steam_paths.iter() {
+        path.push(home_dir);
+        path.push(p);
+        path.push(STEAM_LOCAL_PATH);
+        if path.exists() {
+            return Ok(path);
+        }
+        path.clear();
+    }
+
+    bail!("could not detect file location")
 }
