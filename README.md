@@ -27,7 +27,7 @@ Grim Dawn save file editor
 Usage: yagde [OPTIONS]
 
 Options:
-  -s, --save-path <SAVE_PATH>  [default: "$HOME/.local/share/Steam/steamapps/compatdata/219990/pfx/drive_c/users/steamuser/Documents/My Games/Grim Dawn/save/main"]
+  -s, --save-path <SAVE_PATH>
   -h, --help                   Print help information
 ```
 
