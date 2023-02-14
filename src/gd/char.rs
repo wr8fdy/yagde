@@ -66,15 +66,30 @@ impl Char {
 
     pub fn reset_devotions(&mut self) -> &mut Self {
         self.skills.devotion_reclamation_points_used = 0;
-        let pat = "devotion";
+        let pat = "records/skills/devotion";
+
+        dbg!(&self.skills.skills);
+
         let retained_devotion_points = self
             .skills
             .skills
             .iter()
-            .filter(|&s| s.name.contains(pat) && s.enabled == 1)
+            .filter(|&s| s.name.starts_with(pat) && s.enabled == 1 && s.level == 1)
             .count() as u32;
 
-        self.skills.skills.retain(|s| !s.name.contains(pat));
+        self.skills.skills.retain(|s| {
+            !(s.devotion_level == 0 && s.name.starts_with(pat) && s.enabled == 1 && s.level == 1)
+        });
+
+        for s in self.skills.skills.iter_mut() {
+            if s.devotion_level > 0 {
+                s.enabled = 0;
+                s.level = 0;
+            }
+        }
+
+        dbg!(&self.skills.skills);
+
         self.bio.devotion_points += retained_devotion_points;
         self.bio.total_devotion = self.bio.devotion_points;
         self
@@ -94,12 +109,12 @@ impl Char {
 
     pub fn reset_skills(&mut self) -> &mut Self {
         self.skills.skill_reclamation_points_used = 0;
-        let pat = "playerclass";
+        let pat = "records/skills/playerclass";
         let retained_skill_points = self
             .skills
             .skills
             .iter()
-            .filter(|&s| s.name.contains(pat) && s.enabled == 1)
+            .filter(|&s| s.name.starts_with(pat) && s.enabled == 1)
             .fold(0, |acc, x| acc + x.level);
 
         self.skills.skills.retain(|s| !s.name.contains(pat));

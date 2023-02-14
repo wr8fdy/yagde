@@ -37,7 +37,7 @@ pub struct Skill {
     pub name: String,
     pub enabled: u8,
     pub level: u32,
-    devotion_level: u32,
+    pub devotion_level: u32,
     experience: u32,
     active: u32,
     unknown1: u8,

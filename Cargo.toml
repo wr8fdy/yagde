@@ -14,6 +14,7 @@ strip = true
 [dependencies]
 anyhow = "1.0"
 clap = {version = "4.0.11", features = ["derive"]}
+copy_dir = "0.1.2"
 inquire = "0.4"
 smart-default = "0.6.0"
 strum = "0.24"
