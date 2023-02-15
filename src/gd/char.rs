@@ -66,29 +66,33 @@ impl Char {
 
     pub fn reset_devotions(&mut self) -> &mut Self {
         self.skills.devotion_reclamation_points_used = 0;
-        let pat = "records/skills/devotion";
-
-        dbg!(&self.skills.skills);
+        let pat_dev = "records/skills/devotion";
+        let pat_skill = "records/skills/playerclass";
 
         let retained_devotion_points = self
             .skills
             .skills
             .iter()
-            .filter(|&s| s.name.starts_with(pat) && s.enabled == 1 && s.level == 1)
+            .filter(|&s| s.name.starts_with(pat_dev) && s.enabled == 1 && s.level == 1)
             .count() as u32;
 
         self.skills.skills.retain(|s| {
-            !(s.devotion_level == 0 && s.name.starts_with(pat) && s.enabled == 1 && s.level == 1)
+            !(s.devotion_level == 1
+                && s.name.starts_with(pat_dev)
+                && s.enabled == 1
+                && s.level == 1)
         });
 
         for s in self.skills.skills.iter_mut() {
-            if s.devotion_level > 0 {
-                s.enabled = 0;
+            if s.devotion_level > 1 {
+                s.enabled = 1;
                 s.level = 0;
             }
+            if s.name.starts_with(pat_skill) {
+                s.auto_cast_skill = String::new();
+                s.auto_cast_controller = String::new();
+            }
         }
-
-        dbg!(&self.skills.skills);
 
         self.bio.devotion_points += retained_devotion_points;
         self.bio.total_devotion = self.bio.devotion_points;
@@ -110,6 +114,7 @@ impl Char {
     pub fn reset_skills(&mut self) -> &mut Self {
         self.skills.skill_reclamation_points_used = 0;
         let pat = "records/skills/playerclass";
+
         let retained_skill_points = self
             .skills
             .skills

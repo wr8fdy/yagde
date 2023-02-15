@@ -24,8 +24,8 @@ struct Cli {
 enum CharOpt {
     View,
     Reset,
-    Clone,
     Rename,
+    Clone,
     #[strum(serialize = "\u{23CE} Return")]
     Return,
     #[strum(serialize = "\u{274C} Exit")]
@@ -34,11 +34,11 @@ enum CharOpt {
 
 #[derive(Display, EnumIter)]
 enum ResetOpt {
-    All,
+    Deaths,
     Skills,
     Attributes,
     Devotions,
-    Deaths,
+    All,
     #[strum(serialize = "\u{23CE} Return")]
     Return,
     #[strum(serialize = "\u{274C} Exit")]

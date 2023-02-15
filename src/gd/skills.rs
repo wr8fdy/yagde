@@ -42,8 +42,8 @@ pub struct Skill {
     active: u32,
     unknown1: u8,
     unknown2: u8,
-    auto_cast_skill: String,
-    auto_cast_controller: String,
+    pub auto_cast_skill: String,
+    pub auto_cast_controller: String,
 }
 
 impl ReadWrite for Skill {
