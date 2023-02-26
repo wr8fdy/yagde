@@ -3,7 +3,7 @@ use anyhow::Result;
 use smart_default::SmartDefault;
 use strum_macros::Display;
 
-#[derive(Default, Debug, Display, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Display, Clone, PartialEq, Eq, Copy)]
 pub enum Difficulty {
     #[default]
     Normal,
@@ -31,7 +31,7 @@ impl From<Difficulty> for u8 {
     }
 }
 
-#[derive(Default, Debug, Display, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Display, Clone, PartialEq, Eq, Copy)]
 pub enum CrucibleDifficulty {
     #[default]
     Aspirant,
@@ -91,12 +91,12 @@ impl Info {
 
         f.write_byte(self.is_in_main_quest)?;
         f.write_byte(self.has_been_in_game)?;
-        f.write_byte(self.difficulty.clone().into())?;
-        f.write_byte(self.greatest_difficulty.clone().into())?;
+        f.write_byte(self.difficulty.into())?;
+        f.write_byte(self.greatest_difficulty.into())?;
         f.write_int(self.money)?;
 
         if self.version >= 4 {
-            f.write_byte(self.greatest_crucible_difficulty.clone().into())?;
+            f.write_byte(self.greatest_crucible_difficulty.into())?;
             f.write_int(self.current_tribute)?;
         }
 
