@@ -218,9 +218,9 @@ impl UI {
 
 #[derive(SmartDefault, Debug, Clone, PartialEq)]
 pub struct FactionList {
+    pub factions: Vec<Faction>,
     version: u32,
     faction: u32,
-    factions: Vec<Faction>,
     #[default = 13]
     block_seq: u32,
     #[default(_code = "vec![5]")]
@@ -252,10 +252,10 @@ impl FactionList {
 }
 
 #[derive(Default, Debug, Clone, PartialEq)]
-struct Faction {
+pub struct Faction {
+    pub value: f32,
     modified: u8,
     unlocked: u8,
-    value: f32,
     positive_boost: f32,
     negative_boost: f32,
 }

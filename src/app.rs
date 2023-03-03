@@ -26,6 +26,9 @@ enum CharOpt {
     Reset,
     Rename,
     Clone,
+    AddMoney,
+    BoostFrendlyFactions,
+    BoostHostileFactions,
     #[strum(serialize = "\u{23CE} Return")]
     Return,
     #[strum(serialize = "\u{274C} Exit")]
@@ -96,6 +99,19 @@ pub fn run() -> Result<()> {
                         "Successfully cloned {} to {}",
                         current_char.header.name, new_name
                     );
+                }
+                CharOpt::AddMoney => {
+                    current_char.info.money = current_char.info.money.saturating_add(10_000_000);
+                    current_char.save_as(file_path)?;
+                    println!("Current balance is {}", current_char.info.money);
+                }
+                CharOpt::BoostFrendlyFactions => {
+                    current_char.boost_frendly_factions().save_as(file_path)?;
+                    println!("Frendly factions are boosted!");
+                }
+                CharOpt::BoostHostileFactions => {
+                    current_char.boost_hostile_factions().save_as(file_path)?;
+                    println!("Hostile factions are boosted!");
                 }
                 CharOpt::Reset => loop {
                     let reset_action = Select::new("Choose an action:", ResetOpt::iter().collect())

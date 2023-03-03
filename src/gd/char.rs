@@ -56,6 +56,24 @@ impl Char {
         self
     }
 
+    pub fn boost_hostile_factions(&mut self) -> &mut Self {
+        for f in self.factions.factions.iter_mut() {
+            if f.value < 0.0 {
+                f.value = -20000.0
+            }
+        }
+        self
+    }
+
+    pub fn boost_frendly_factions(&mut self) -> &mut Self {
+        for f in self.factions.factions.iter_mut() {
+            if f.value > 0.0 {
+                f.value = 25000.0
+            }
+        }
+        self
+    }
+
     pub fn reset_all(&mut self) -> &mut Self {
         self.reset_devotions()
             .reset_attributes()
