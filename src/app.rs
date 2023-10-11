@@ -65,7 +65,7 @@ pub fn run() -> Result<()> {
         options.sort();
         options.push(&exit);
 
-        let char = Select::new("Choose a character:", options.clone())
+        let char = Select::new("Choose character:", options.clone())
             .with_page_size(15)
             .prompt()?;
 
@@ -79,7 +79,7 @@ pub fn run() -> Result<()> {
         current_char.read(file_path)?;
 
         loop {
-            let action = Select::new("Choose an action:", CharOpt::iter().collect())
+            let action = Select::new("Choose action:", CharOpt::iter().collect())
                 .with_page_size(15)
                 .prompt()?;
 
@@ -114,7 +114,7 @@ pub fn run() -> Result<()> {
                     println!("Hostile factions are boosted!");
                 }
                 CharOpt::Reset => loop {
-                    let reset_action = Select::new("Choose an action:", ResetOpt::iter().collect())
+                    let reset_action = Select::new("Choose action:", ResetOpt::iter().collect())
                         .with_page_size(15)
                         .prompt()?;
 
