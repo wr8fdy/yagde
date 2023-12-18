@@ -158,7 +158,7 @@ fn get_chars_names(p: &PathBuf) -> Result<HashMap<String, PathBuf>> {
 fn find_save_files() -> Result<PathBuf> {
     let home_dir = &env::var("HOME")?;
 
-    let steam_paths = vec![
+    let steam_paths = [
         ".local/share/Steam",
         ".steam/debian-installation",
         ".var/app/com.valvesoftware.Steam/data/Steam",
@@ -243,3 +243,4 @@ fn clone_char(path: &Path, current_char_dir: &Path) -> Result<String> {
 
     Ok(to_name)
 }
+

@@ -155,7 +155,7 @@ pub struct UI {
     camera_distance: f32,
     #[default = 14]
     block_seq: u32,
-    #[default(_code = "vec![4, 5]")]
+    #[default(_code = "vec![4, 5, 6]")]
     supported_versions: Vec<u32>,
 }
 
@@ -198,7 +198,9 @@ impl UI {
             self.unknown6[i] = f.read_byte()?;
         }
 
-        if self.version >= 5 {
+        if self.version >= 6 {
+            self.slots = Vec::with_capacity(47);
+        } else if self.version == 5 {
             self.slots = Vec::with_capacity(46);
         } else {
             self.slots = Vec::with_capacity(36);
@@ -318,3 +320,4 @@ impl NoteList {
         f.read_block_end(&mut b)
     }
 }
+
