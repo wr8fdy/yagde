@@ -86,12 +86,10 @@ pub fn run() -> Result<()> {
             match action {
                 CharOpt::View => current_char.print_info(),
                 CharOpt::Rename => {
+                    let old_name = current_char.header.name.clone();
                     let new_name = Text::new("Enter a new name:").prompt()?;
                     current_char.rename(&new_name).save_as(file_path)?;
-                    println!(
-                        "Successfully renamed from {} to {}",
-                        current_char.header.name, &new_name
-                    );
+                    println!("Successfully renamed from {} to {}", old_name, &new_name);
                 }
                 CharOpt::Clone => {
                     let new_name = clone_char(&path, current_char_dir)?;
@@ -147,6 +145,9 @@ fn get_chars_names(p: &PathBuf) -> Result<HashMap<String, PathBuf>> {
 
     let mut chars = HashMap::new();
     for char_dir in char_dirs.iter() {
+        if char_dir.to_str().unwrap().contains("__") {
+            continue;
+        }
         let mut c = char::Char::new();
         let char_file = char_dir.join("player.gdc");
         chars.insert(c.get_name(&char_file)?, char_dir.clone());
@@ -243,4 +244,3 @@ fn clone_char(path: &Path, current_char_dir: &Path) -> Result<String> {
 
     Ok(to_name)
 }
-
