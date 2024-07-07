@@ -1,5 +1,5 @@
 use crate::gd::gd_file::{Block, GDReader, GDWriter};
-use anyhow::Result;
+use anyhow::{Context, Result};
 use smart_default::SmartDefault;
 use strum_macros::Display;
 
@@ -126,7 +126,9 @@ impl Info {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f
+            .read_version(&self.supported_versions)
+            .context("in info")?;
         self.is_in_main_quest = f.read_byte()?;
         self.has_been_in_game = f.read_byte()?;
         self.difficulty = f.read_byte()?.into();
@@ -204,7 +206,7 @@ impl Bio {
 
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f.read_version(&self.supported_versions).context("in bio")?;
         self.level = f.read_int()?;
         self.experience = f.read_int()?;
         self.attribute_points = f.read_int()?;

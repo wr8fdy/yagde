@@ -1,7 +1,7 @@
 use crate::gd::gd_file::{Block, GDReader, GDWriter, ReadWrite};
 use crate::gd::item::Item;
 
-use anyhow::{Ok, Result};
+use anyhow::{Context, Ok, Result};
 use smart_default::SmartDefault;
 
 #[derive(Default, Debug, Clone, PartialEq)]
@@ -107,7 +107,9 @@ impl Stash {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f
+            .read_version(&self.supported_versions)
+            .context("in stash")?;
         self.num_pages = 1;
         if self.version >= 6 {
             self.num_pages = f.read_int()? as usize;
@@ -248,7 +250,9 @@ impl Inventory {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f
+            .read_version(&self.supported_versions)
+            .context("in inventory")?;
         self.flag = f.read_byte()?;
 
         if self.flag != 0 {

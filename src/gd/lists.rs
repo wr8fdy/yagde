@@ -1,6 +1,6 @@
 use crate::gd::gd_file::{Block, GDReader, GDWriter, ReadWrite};
 
-use anyhow::{Ok, Result};
+use anyhow::{Context, Ok, Result};
 use smart_default::SmartDefault;
 use std::ops::{Deref, DerefMut};
 
@@ -31,7 +31,9 @@ impl TeleportList {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f
+            .read_version(&self.supported_versions)
+            .context("in teleport list")?;
 
         for i in self.uids.iter_mut() {
             i.extend(f.read_vec()?);
@@ -73,7 +75,9 @@ impl RespawnList {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f
+            .read_version(&self.supported_versions)
+            .context("in respawn list")?;
 
         for i in self.uids.iter_mut() {
             i.extend(f.read_vec()?);
@@ -114,7 +118,9 @@ impl MarkerList {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f
+            .read_version(&self.supported_versions)
+            .context("in marker list")?;
 
         for i in self.uids.iter_mut() {
             i.extend(f.read_vec()?);
@@ -150,7 +156,9 @@ impl ShrineList {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f
+            .read_version(&self.supported_versions)
+            .context("in shrine list")?;
 
         for i in self.uids.iter_mut() {
             i.extend(f.read_vec()?);
@@ -162,6 +170,12 @@ impl ShrineList {
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct CharUID([u8; 16]);
+
+impl std::fmt::Display for CharUID {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "{}", self.0.map(|v| v.to_string()).join(""))
+    }
+}
 
 impl Deref for CharUID {
     type Target = [u8; 16];

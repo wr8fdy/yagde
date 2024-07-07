@@ -10,6 +10,7 @@ use copy_dir::copy_dir;
 use inquire::{Select, Text};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter};
+use tracing::{debug, span, Level};
 
 #[derive(Parser, Debug)]
 #[command(name = "yagde")]
@@ -49,6 +50,10 @@ enum ResetOpt {
 }
 
 pub fn run() -> Result<()> {
+    tracing_subscriber::fmt::init();
+    let span = span!(Level::INFO, "app");
+    let _enter = span.enter();
+
     let cli = Cli::parse();
 
     let path: PathBuf;
@@ -59,6 +64,7 @@ pub fn run() -> Result<()> {
     }
 
     'char_select: loop {
+        // reload chars after potential clone
         let chars = get_chars_names(&path)?;
         let mut options: Vec<&String> = chars.keys().collect();
         let exit = "\u{274C} Exit".to_owned();
@@ -170,6 +176,7 @@ fn find_save_files() -> Result<PathBuf> {
         steam_path.push(home_dir);
         steam_path.push(p);
         if steam_path.exists() {
+            debug!(?steam_path, "found steam in");
             break;
         }
         steam_path.clear();

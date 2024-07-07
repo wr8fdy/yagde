@@ -9,10 +9,11 @@ use crate::gd::stats::*;
 use std::fs::File;
 use std::path::PathBuf;
 
-use anyhow::{bail, Error, Ok, Result};
+use anyhow::{bail, Context, Error, Ok, Result};
 use smart_default::SmartDefault;
 use strum_macros::Display;
 use thiserror::Error;
+use tracing::{debug, instrument};
 
 #[derive(Error, Debug)]
 enum ParseError {
@@ -52,7 +53,7 @@ impl Char {
     }
 
     pub fn rename(&mut self, new_name: &str) -> &mut Self {
-        self.header.name = new_name.to_owned();
+        new_name.clone_into(&mut self.header.name);
         self
     }
 
@@ -157,6 +158,7 @@ impl Char {
     pub fn print_info(&self) {
         println!("{:=^50}", " Main stats ");
         println!("{0: <35} {1}", "Name:", &self.header.name);
+        println!("{0: <35} {1}", "UID:", &self.uid);
         println!("{0: <35} {1}", "Sex:", &self.header.sex);
         println!("{0: <35} {1}", "Level:", &self.header.level);
         println!("{0: <35} {1}", "Hardcore:", &self.header.hardcore);
@@ -221,6 +223,7 @@ impl Char {
         Ok(self.header.name.to_string())
     }
 
+    #[instrument(skip(self))]
     pub fn write(&mut self, path: &PathBuf) -> Result<()> {
         let mut f = GDFile::new(File::create(path)?);
 
@@ -251,6 +254,7 @@ impl Char {
         Ok(())
     }
 
+    #[instrument(skip(self))]
     pub fn read(&mut self, path: &PathBuf) -> Result<&mut Self> {
         let mut f = GDFile::new(std::fs::File::open(path)?);
 
@@ -261,7 +265,10 @@ impl Char {
             bail!("next_int() != 0");
         }
 
-        self.version = f.read_version(&self.supported_versions)?;
+        debug!("reading version");
+        self.version = f
+            .read_version(&self.supported_versions)
+            .context("in char")?;
         self.uid.read(&mut f)?;
         self.info.read(&mut f)?;
         self.bio.read(&mut f)?;
@@ -356,7 +363,9 @@ impl Header {
     }
 
     fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f
+            .read_version(&self.supported_versions)
+            .context("in header")?;
         self.name = f.read_wstring()?;
         self.sex = f.read_byte()?.try_into()?;
         self.class_id = f.read_string()?;

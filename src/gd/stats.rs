@@ -1,6 +1,6 @@
 use crate::gd::gd_file::{Block, GDReader, GDWriter, ReadWrite};
 
-use anyhow::{Ok, Result};
+use anyhow::{Context, Ok, Result};
 use smart_default::SmartDefault;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -146,7 +146,9 @@ impl Stats {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f
+            .read_version(&self.supported_versions)
+            .context("in stats")?;
         self.playtime = f.read_int()?;
         self.deaths = f.read_int()?;
         self.kills = f.read_int()?;

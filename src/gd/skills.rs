@@ -1,7 +1,33 @@
 use crate::gd::gd_file::{Block, GDReader, GDWriter, ReadWrite};
 
-use anyhow::{Ok, Result};
+use anyhow::{Context, Ok, Result};
 use smart_default::SmartDefault;
+
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+struct SubSkill {
+    name: String,
+    auto_cast_skill: String,
+    auto_cast_controller: String,
+    parent_skill: String,
+}
+
+impl ReadWrite for SubSkill {
+    fn write(&self, f: &mut impl GDWriter) -> Result<()> {
+        f.write_string(&self.name)?;
+        f.write_string(&self.auto_cast_skill)?;
+        f.write_string(&self.auto_cast_controller)?;
+        f.write_string(&self.parent_skill)
+    }
+
+    fn read(&mut self, f: &mut impl GDReader) -> Result<()> {
+        self.name = f.read_string()?;
+        self.auto_cast_skill = f.read_string()?;
+        self.auto_cast_controller = f.read_string()?;
+        self.parent_skill = f.read_string()?;
+
+        Ok(())
+    }
+}
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 struct ItemSkill {
@@ -83,10 +109,11 @@ pub struct SkillList {
     pub skills: Vec<Skill>,
     version: u32,
     item_skills: Vec<ItemSkill>,
+    sub_skills: Vec<SubSkill>,
     masteries_allowed: u32,
     #[default = 8]
     block_seq: u32,
-    #[default(_code = "vec![5]")]
+    #[default(_code = "vec![5, 6]")]
     supported_versions: Vec<u32>,
 }
 
@@ -101,6 +128,9 @@ impl SkillList {
         f.write_int(self.skill_reclamation_points_used)?;
         f.write_int(self.devotion_reclamation_points_used)?;
         f.write_vec(&self.item_skills)?;
+        if self.version >= 6 {
+            f.write_vec(&self.sub_skills)?;
+        }
 
         f.write_block_end(&mut b)
     }
@@ -109,12 +139,17 @@ impl SkillList {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f
+            .read_version(&self.supported_versions)
+            .context("in skill list")?;
         self.skills = f.read_vec()?;
         self.masteries_allowed = f.read_int()?;
         self.skill_reclamation_points_used = f.read_int()?;
         self.devotion_reclamation_points_used = f.read_int()?;
         self.item_skills = f.read_vec()?;
+        if self.version >= 6 {
+            self.sub_skills = f.read_vec()?;
+        }
 
         f.read_block_end(&mut b)
     }

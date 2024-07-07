@@ -1,6 +1,8 @@
+use std::vec;
+
 use crate::gd::gd_file::{Block, GDReader, GDWriter, ReadWrite};
 
-use anyhow::{Ok, Result};
+use anyhow::{Context, Ok, Result};
 use smart_default::SmartDefault;
 
 #[derive(SmartDefault, Debug, Clone, PartialEq, Eq)]
@@ -34,7 +36,9 @@ impl Crucible {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f
+            .read_version(&self.supported_versions)
+            .context("in crucible")?;
 
         for i in 0..self.tokens_per_difficulty.len() {
             for _ in 0..f.read_int()? {
@@ -80,7 +84,9 @@ impl TutorialPages {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f
+            .read_version(&self.supported_versions)
+            .context("in tutorial pages")?;
         let n = f.read_int()? as usize;
         self.pages = Vec::with_capacity(n);
         for _ in 0..n {
@@ -89,6 +95,47 @@ impl TutorialPages {
         }
 
         f.read_block_end(&mut b)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UISkillSet {
+    id: u32,
+    slots: Vec<UISlot>,
+}
+
+impl UISkillSet {
+    pub fn with_slots(cap: usize) -> Self {
+        Self {
+            id: 0,
+            slots: Vec::with_capacity(cap),
+        }
+    }
+
+    pub fn write(&self, version: u32, f: &mut impl GDWriter) -> Result<()> {
+        if version >= 7 {
+            f.write_int(self.id)?;
+        }
+
+        for s in self.slots.iter() {
+            s.write(f)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn read(&mut self, version: u32, f: &mut impl GDReader) -> Result<()> {
+        if version >= 7 {
+            self.id = f.read_int()?;
+        }
+
+        for _ in 0..self.slots.capacity() {
+            let mut slot = UISlot::default();
+            slot.read(f)?;
+            self.slots.push(slot);
+        }
+
+        Ok(())
     }
 }
 
@@ -145,7 +192,6 @@ impl UISlot {
 #[derive(SmartDefault, Debug, Clone, PartialEq)]
 pub struct UI {
     version: u32,
-    slots: Vec<UISlot>,
     unknown1: u8,
     unknown2: u32,
     unknown3: u8,
@@ -153,9 +199,12 @@ pub struct UI {
     unknown5: [String; 5],
     unknown6: [u8; 5],
     camera_distance: f32,
+    num_skill_set: u32,
+    slots_per_set: u32,
+    skill_sets: Vec<UISkillSet>,
     #[default = 14]
     block_seq: u32,
-    #[default(_code = "vec![4, 5, 6]")]
+    #[default(_code = "vec![4, 5, 6, 7]")]
     supported_versions: Vec<u32>,
 }
 
@@ -174,8 +223,14 @@ impl UI {
             f.write_string(&self.unknown5[i])?;
             f.write_byte(self.unknown6[i])?;
         }
-        for s in self.slots.iter() {
-            s.write(f)?;
+
+        if self.version >= 7 {
+            f.write_int(self.num_skill_set)?;
+            f.write_int(self.slots_per_set)?;
+        }
+
+        for s in self.skill_sets.iter() {
+            s.write(self.version, f)?;
         }
 
         f.write_float(self.camera_distance)?;
@@ -187,7 +242,7 @@ impl UI {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f.read_version(&self.supported_versions).context("in UI")?;
         self.unknown1 = f.read_byte()?;
         self.unknown2 = f.read_int()?;
         self.unknown3 = f.read_byte()?;
@@ -198,18 +253,24 @@ impl UI {
             self.unknown6[i] = f.read_byte()?;
         }
 
-        if self.version >= 6 {
-            self.slots = Vec::with_capacity(47);
-        } else if self.version == 5 {
-            self.slots = Vec::with_capacity(46);
+        if self.version >= 7 {
+            self.num_skill_set = f.read_int()?;
+            self.slots_per_set = f.read_int()?;
         } else {
-            self.slots = Vec::with_capacity(36);
+            self.num_skill_set = 1;
+            if self.version >= 6 {
+                self.slots_per_set = 47;
+            } else if self.version == 5 {
+                self.slots_per_set = 46;
+            } else {
+                self.slots_per_set = 36;
+            }
         }
 
-        for _ in 0..self.slots.capacity() {
-            let mut slot = UISlot::default();
-            slot.read(f)?;
-            self.slots.push(slot);
+        for _ in 0..self.num_skill_set {
+            let mut skill_set = UISkillSet::with_slots(self.slots_per_set as usize);
+            skill_set.read(self.version, f)?;
+            self.skill_sets.push(skill_set);
         }
 
         self.camera_distance = f.read_float()?;
@@ -245,7 +306,9 @@ impl FactionList {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f
+            .read_version(&self.supported_versions)
+            .context("in faction list")?;
         self.faction = f.read_int()?;
         self.factions = f.read_vec()?;
 
@@ -310,7 +373,9 @@ impl NoteList {
         let mut b = Block::default();
         f.read_block_start(&mut b, self.block_seq)?;
 
-        self.version = f.read_version(&self.supported_versions)?;
+        self.version = f
+            .read_version(&self.supported_versions)
+            .context("in note list")?;
         let n = f.read_int()?;
         for _ in 0..n {
             let note = f.read_string()?;
@@ -320,4 +385,3 @@ impl NoteList {
         f.read_block_end(&mut b)
     }
 }
-

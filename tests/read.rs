@@ -1,5 +1,5 @@
-use yagde::gd::char;
 use std::path::Path;
+use yagde::gd::char;
 
 #[test]
 fn read_vanilla_female_hc() {
@@ -107,4 +107,22 @@ fn read_fg_male_sc() {
         char::ExpansionStatus::ForgottenGods
     );
     assert_eq!(current_char.header.level, 1);
+}
+
+#[test]
+fn read_v121() {
+    const PATH: &str = "./tests/save/_TestMain121/player.gdc";
+
+    let mut current_char = char::Char::new();
+    current_char.read(&Path::new(&PATH).to_path_buf()).unwrap();
+
+    assert_eq!(current_char.header.name, "TestOneTwoOne");
+    assert_eq!(current_char.header.hardcore, 1);
+    assert_eq!(current_char.header.sex as u8, 1);
+    assert_eq!(current_char.header.sex, char::Sex::Male);
+    assert_eq!(
+        current_char.header.expansion_status,
+        char::ExpansionStatus::Crucible
+    );
+    assert_eq!(current_char.header.level, 100);
 }
